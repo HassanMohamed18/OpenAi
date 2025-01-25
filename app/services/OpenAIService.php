@@ -19,28 +19,28 @@ class OpenAIService
         // Fetch table metadata
         try {
 
-            $tables = DB::select("SELECT TABLE_NAME
-                                FROM information_schema.tables 
-                                WHERE table_schema = 'realstate' 
-                                and TABLE_NAME 
-                                IN('areas','locations','projects','units');");
-            $tableNames = array_map('current', $tables);
+            // $tables = DB::select("SELECT TABLE_NAME
+            //                     FROM information_schema.tables 
+            //                     WHERE table_schema = 'realstate' 
+            //                     and TABLE_NAME 
+            //                     IN('areas','locations','projects','units');");
+            // $tableNames = array_map('current', $tables);
 
-            // Provide schema to GPT-4
-            $schemaInfo = [];
-            foreach ($tableNames as $table) {
-                $columns = DB::select("SHOW COLUMNS FROM {$table}");
-                $schemaInfo[$table] = array_map(function ($column) {
-                    return $column->Field . ' (' . $column->Type . ')';
-                }, $columns);
-            }
+            // // Provide schema to GPT-4
+            // $schemaInfo = [];
+            // foreach ($tableNames as $table) {
+            //     $columns = DB::select("SHOW COLUMNS FROM {$table}");
+            //     $schemaInfo[$table] = array_map(function ($column) {
+            //         return $column->Field . ' (' . $column->Type . ')';
+            //     }, $columns);
+            // }
 
-            // Prepare GPT-4 prompt
-            $prompt = "You are connected to a MySQL database with the following schema:\n\n";
-            foreach ($schemaInfo as $table => $columns) {
-                $prompt .= "Table: {$table}\nColumns: " . implode(', ', $columns) . "\n\n";
-            }
-             $prompt .= "User query: {$userAsk}\nTranslate the entire question to english and Provide only a SQL query to answer this translated english question using matching technique with varchar columns type without explaination and translated question.";
+            // // Prepare GPT-4 prompt
+            // $prompt = "You are connected to a MySQL database with the following schema:\n\n";
+            // foreach ($schemaInfo as $table => $columns) {
+            //     $prompt .= "Table: {$table}\nColumns: " . implode(', ', $columns) . "\n\n";
+            // }
+            //  $prompt .= "User query: {$userAsk}\nTranslate the entire question to english and Provide only a SQL query to answer this translated english question using matching technique with varchar columns type without explaination and translated question.";
 
             // $spacing_removed = str_replace(' ', '', $userAsk);
             // return strlen(trim($spacing_removed));
@@ -67,13 +67,13 @@ class OpenAIService
                 'model' => 'gpt-4o',
                 'messages' => [
                     ['role' => 'system', 'content' => 'You are a helpful assistant who can interact with databases.'],
-                    ['role' => 'user', 'content' => $prompt],
+                    ['role' => 'user', 'content' => $userAsk],
                 ],
-                'max_tokens' => 250,
+                'max_tokens' => 20,
             ]);
 
             // // Extract GPT-4's response
-             $gptResponse =  $response['choices'][0]['message']['content'] ?? 'No response';
+             return $gptResponse =  $response['choices'][0]['message']['content'] ?? 'No response';
             $sqlQuery = $this->extractSQLQuery($gptResponse);
             if ($sqlQuery) {
                 return $this->executeSQL($sqlQuery);

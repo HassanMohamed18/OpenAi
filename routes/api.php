@@ -22,7 +22,7 @@ Route::get('/test', function (){
 Route::get('/chat_gpt', [OpenAIController::class, 'chat']);
 Route::get('/ask_deepseek', [DeepSeekController::class, 'chat']);
 
-Route::get('/vectors', [VectorDatabaesController::class, 'insert_vectors']);
+Route::get('/vectors/store', [VectorDatabaesController::class, 'insert_vectors']);
 
-Route::get('/search', [ChatWithEmbeddingsController::class, 'chat']);
+Route::get('/vectors/search', [VectorDatabaesController::class, 'test_embeddings']);
 

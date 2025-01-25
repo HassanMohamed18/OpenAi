@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('vector_data', function (Blueprint $table) {
             $table->id(); // Primary key
             $table->string('source_table'); // Reference to the original table row
-            $table->string('column_name'); // Name of the column being processed
+            //$table->string('column_name'); // Name of the column being processed
             $table->text('text'); // Text content
             $table->json('embedding'); // JSON-encoded embeddings
             $table->timestamps(); // created_at and updated_at
