@@ -20,14 +20,49 @@ class VectorDatabaesController extends Controller
 
     public function insert_vectors()
     {
-        $table = 'projects';
-        $columns = ['project_name','project_type','total_units','available_units','launch_date','completion_date','status','price_range','price_range_SQ','description','project_size'];
+        try{
+            // $table = 'projects';
+            // $columns = ['project_name','project_type','total_units','available_units',
+            // 'launch_date','completion_date','status','price_range','price_range_SQ','description','project_size'];
+    
 
-        //$this->info("Processing table: {$table}, column: {$column}");
+            $table = 'properties';
+            $columns = ['property_name','plot_size','bua_size','maid_room','size','bedrooms','bathrooms',
+            'parking_spaces','availability_status','construction_status','description','ownership_type','zone_name'];
+    
+            $result = $this->embeddingService->processTableData($table, $columns,'property_id');
+            return response()->json( $result);
+        }catch(\Exception $e){
+            return $e->getMessage();
+        }
+        
 
-        // Call the service to process table data
-        $this->embeddingService->processTableData($table, $columns);
+    }
 
-       // $this->info("All rows from {$table}.{$column} processed successfully.");
+    public function test_embeddings(){
+        $userMessage = 'i want to know the properties in Damac Lagoons - Costa Brava 2 project';
+         // Step 1: Generate embeddings for the user message
+        $userEmbedding = $this->embeddingService->generateEmbeddings($userMessage);
+
+        // Step 2: Find the most relevant context from the database
+          return $relevantContext = $this->embeddingService->findRelevantContext($userEmbedding);
+
+         $contextText = implode("\n", array_column($relevantContext, 'text'));
+
+        //Step 3: Perform chat completion with context
+        $gptResponse = $this->client->chat()->create([
+            'model' => 'gpt-4o',
+            'messages' => [
+                ['role' => 'system', 'content' => 'You are a helpful assistant that uses relevant stored context to answer questions.'],
+                ['role' => 'system', 'content' => "Relevant context:\n" . $contextText],
+                ['role' => 'user', 'content' => $userMessage],
+            ],
+            'max_tokens' => 150,
+            
+        ]);
+
+        return response()->json([
+            'message' => $gptResponse['choices'][0]['message']['content'],
+        ]);
     }
 }

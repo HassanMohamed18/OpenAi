@@ -21,7 +21,7 @@ class ChatController extends Controller
         // ]);
 
         // $userQuery = $request->input('query');
-        $userQuery = 'give me information about the best two projects with the most available units';
+        $userQuery = 'what is php';
         $response = $this->openAIService->processUserQuery($userQuery);
         
         //dd($response);
