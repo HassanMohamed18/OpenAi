@@ -40,7 +40,7 @@ class VectorDatabaesController extends Controller
     }
 
     public function test_embeddings(){
-        $userMessage = 'i want to know the properties in Damac Lagoons - Costa Brava 2 project';
+        $userMessage = 'عايز اعرف اسعار المشاريع';
          // Step 1: Generate embeddings for the user message
         $userEmbedding = $this->embeddingService->generateEmbeddings($userMessage);
 
