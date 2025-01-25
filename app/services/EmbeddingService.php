@@ -168,7 +168,7 @@ class EmbeddingService
         }
     }
 
-    public function findRelevantContext(array $userEmbedding, int $limit = 4): array
+    public function findRelevantContext(array $userEmbedding, int $limit = 3): array
     {
         $vectorData = DB::table('vector_data')->get();
 

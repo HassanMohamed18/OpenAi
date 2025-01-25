@@ -51,7 +51,7 @@ class ChatWithEmbeddingsController extends Controller
         // echo "data: " . json_encode(['message' => 'Streaming started...']) . "\n\n";
         // flush();
 
-        // Step 1: Generate embeddings for the user message
+        //Step 1: Generate embeddings for the user message
         $userEmbedding = $this->embeddingService->generateEmbeddings($userMessage);
 
         // Step 2: Find the most relevant context from the database
@@ -104,7 +104,7 @@ class ChatWithEmbeddingsController extends Controller
                     ['role' => 'system', 'content' => "Relevant context:\n" . $contextText],
                     ['role' => 'user', 'content' => $userMessage],
                 ],
-                'max_tokens' => 100,
+                'max_tokens' => 250,
                 'stream' => true,
             ]);
 
