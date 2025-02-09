@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\File;
+
 use OpenAI;
 
 class VoiceBotStreamService
@@ -48,7 +50,7 @@ class VoiceBotStreamService
         //     'voice' => 'alloy',
         //     'input' => $text
         // ]);
-        $apiKey = 'your-api-key'; // Replace with your OpenAI API key
+        $apiKey = env('OPENAI_API_KEY'); // Replace with your OpenAI API key
         $url = "https://api.openai.com/v1/audio/speech";
     
         // Make the API request
@@ -66,6 +68,19 @@ class VoiceBotStreamService
             return response()->json(['error' => 'Failed to generate speech', 'response' => $response->body()], $response->status());
         }
 
-        return $response->body();
+        $directory = public_path('audio'); // Path to "public/audio/"
+    $filePath = $directory . '/response.mp3';
+
+    // Ensure the "audio" directory exists
+    if (!File::exists($directory)) {
+        File::makeDirectory($directory, 0755, true); // Create directory if not exists
+    }
+
+    // Save the audio response to a file
+    file_put_contents($filePath, $response->body());
+
+   // return true;
+    // Return the URL to the saved audio file
+   return asset('audio/response.mp3');
     }
 }

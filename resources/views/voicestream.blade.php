@@ -1,4 +1,4 @@
-{{-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -54,9 +54,14 @@
                     body: JSON.stringify({ text: aiResponse })
                 });
 
-                let audioUrl = URL.createObjectURL(await ttsResponse.blob());
+                // let ttsBlob = await ttsResponse.blob();
+                // let audioUrl = URL.createObjectURL(ttsBlob);
+                // console.log(audioUrl)
+                let data = await ttsResponse.json();
+                let audioUrl = data.audio_url
+                console.log(data.audio_url)
                 document.getElementById("audioPlayer").src = audioUrl;
-                
+                document.getElementById("audioPlayer").play()
                 audioChunks = []; // Reset recording
             };
 
@@ -72,9 +77,9 @@
         });
     </script>
 </body>
-</html> --}}
+</html>
 
-
+{{-- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -144,4 +149,4 @@
         }
     </script>
 </body>
-</html>
+</html> --}}

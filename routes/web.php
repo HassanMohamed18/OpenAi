@@ -26,3 +26,7 @@ Route::get('/voicebot', [VoiceChatController::class, 'index'])->name('voice.inde
 
 Route::get('/voicebot_stream', [VoiceBotController::class, 'index'])->name('voicebot.index');
 
+
+Route::get('/speech', function () {
+    return view('speech');
+});

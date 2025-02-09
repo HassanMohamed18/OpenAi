@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OpenAIController;
 use App\Http\Controllers\PineconeController;
+use App\Http\Controllers\SpeechController;
 use App\Http\Controllers\VectorDatabaesController;
 use App\Http\Controllers\VoiceBotController;
 use App\Http\Controllers\VoiceChatController;
@@ -41,3 +42,7 @@ Route::get('/google/search', [googleSearchController::class, 'google_search']);
 
 Route::post('/voicebot', [VoiceBotController::class, 'processVoice']);
 Route::post('/voicebot/speech', [VoiceBotController::class, 'generateSpeech']);
+
+
+
+Route::post('/speech/stream', [SpeechController::class, 'streamSpeech']);

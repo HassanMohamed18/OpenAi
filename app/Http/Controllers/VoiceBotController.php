@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\VoiceBotStreamService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+
 
 class VoiceBotController extends Controller
 {
@@ -63,9 +65,12 @@ class VoiceBotController extends Controller
 
             $audioData = $this->openAIService->generateSpeech($request->input('text'));
 
-            return response($audioData)
-                ->header('Content-Type', 'audio/mpeg')
-                ->header('Content-Disposition', 'inline; filename="response.mp3"');
+            // return response($audioData)
+            //     ->header('Content-Type', 'audio/mpeg')
+            //     ->header('Content-Disposition', 'inline; filename="response.mp3"');
+            return response()->json([
+                'audio_url' => $audioData
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
