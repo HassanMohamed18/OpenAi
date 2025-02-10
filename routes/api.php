@@ -12,6 +12,7 @@ use App\Http\Controllers\SpeechController;
 use App\Http\Controllers\VectorDatabaesController;
 use App\Http\Controllers\VoiceBotController;
 use App\Http\Controllers\VoiceChatController;
+use App\Http\Controllers\VoiceSessionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -46,3 +47,5 @@ Route::post('/voicebot/speech', [VoiceBotController::class, 'generateSpeech']);
 
 
 Route::post('/speech/stream', [SpeechController::class, 'streamSpeech']);
+
+Route::post('/chat_voice', [VoiceSessionController::class, 'chatWithAI']);

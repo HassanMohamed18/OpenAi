@@ -5,6 +5,7 @@ use App\Http\Controllers\ChatWithMySqlDatabaseController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\VoiceBotController;
 use App\Http\Controllers\VoiceChatController;
+use App\Http\Controllers\VoiceSessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -30,3 +31,9 @@ Route::get('/voicebot_stream', [VoiceBotController::class, 'index'])->name('voic
 Route::get('/speech', function () {
     return view('speech');
 });
+
+Route::get('/voice', function () {
+    return view('voicebotSession');
+});
+
+Route::post('/chat-voice', [VoiceSessionController::class, 'chatWithAI'])->name('chat.voice');
