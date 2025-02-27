@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ChatWithEmbeddingsController;
 use App\Http\Controllers\ChatWithMySqlDatabaseController;
+use App\Http\Controllers\GeminiController;
+use App\Http\Controllers\OllamaController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\VoiceBotController;
 use App\Http\Controllers\VoiceChatController;
@@ -37,3 +39,25 @@ Route::get('/voice', function () {
 });
 
 Route::post('/chat-voice', [VoiceSessionController::class, 'chatWithAI'])->name('chat.voice');
+
+Route::get('/webrtc', function () {
+    return view('webrtc');
+});
+
+Route::get('/ollama', function () {
+    return view('ollama');
+});
+
+Route::post('/ollama/chat', [OllamaController::class, 'chat']);
+
+
+Route::get('/gemini', function () {
+    return view('gemini');
+});
+
+Route::post('/gemini/chat', [GeminiController::class, 'chat']);
+
+
+Route::get('/mongo', function () {
+    return view('mongo');
+});

@@ -4,6 +4,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChatWithEmbeddingsController;
 use App\Http\Controllers\DeepSeekController;
 use App\Http\Controllers\googleSearchController;
+use App\Http\Controllers\MongoDBController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OpenAIController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\VectorDatabaesController;
 use App\Http\Controllers\VoiceBotController;
 use App\Http\Controllers\VoiceChatController;
 use App\Http\Controllers\VoiceSessionController;
+use App\Http\Controllers\WebRTCController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -49,3 +51,26 @@ Route::post('/voicebot/speech', [VoiceBotController::class, 'generateSpeech']);
 Route::post('/speech/stream', [SpeechController::class, 'streamSpeech']);
 
 Route::post('/chat_voice', [VoiceSessionController::class, 'chatWithAI']);
+
+Route::get('/session', [WebRTCController::class, 'getSessionToken']);
+
+
+
+
+Route::get('/mongo/search', [MongoDBController::class, 'search']);
+Route::get('/mongo/store', [MongoDBController::class, 'store']);
+
+Route::get('/mongo/delete', [MongoDBController::class, 'DeleteAllDocuments']);
+
+Route::get('/mongo/count', [MongoDBController::class, 'CountAllDocuments']);
+
+Route::post('/get-aggregated-data', [MongoDBController::class, 'retreiveData']);
+
+
+Route::get('/chat_stream', [ChatWithEmbeddingsController::class, 'chat'])->name('chat.store');
+
+
+
+
+
+

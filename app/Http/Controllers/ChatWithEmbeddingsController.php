@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 //use App\Services\EmbeddingService;
 
 use App\Services\GoogleSearchService;
+//use App\Services\MongoDBService;
+use App\Services\MongoServiceTest;
 use App\Services\PineconeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use OpenAI;
 
 class ChatWithEmbeddingsController extends Controller
@@ -16,10 +19,13 @@ class ChatWithEmbeddingsController extends Controller
     protected $client;
     private $UserId;
     public $topK;
-    public function __construct(PineconeService $embeddingService, GoogleSearchService $googleSearchService)
+    protected $mongoDBService;
+
+    public function __construct(PineconeService $embeddingService, GoogleSearchService $googleSearchService,MongoServiceTest $mongoDBService)
     {
         $this->embeddingService = $embeddingService;
         $this->googleSearchService = $googleSearchService;
+        $this->mongoDBService = $mongoDBService;
         $this->topK = 20;
         $this->client = OpenAI::client(env('OPENAI_API_KEY'));
         //$this->UserId = auth()->id() ?? 'guest'; // Retrieve authenticated user ID or set to 'guest' for unauthenticated users.
@@ -44,7 +50,7 @@ class ChatWithEmbeddingsController extends Controller
         //     'message' => 'required|string',
         // ]);
 
-        $userMessage = $request->input('message');
+       $userMessage = $request->input('userMessage');
         // $validated = $request->validate([
         //     'message' => 'required|string',
         // ]);
@@ -75,7 +81,7 @@ class ChatWithEmbeddingsController extends Controller
 
         //$userMessage = 'give me information about the projects';
         //$topk = 20;
-        $filters = $this->embeddingService->parseNaturalLanguageFilters($userMessage);
+       /* $filters = $this->embeddingService->parseNaturalLanguageFilters($userMessage);
         $filter = $filters['filters'];
         $translatedQuery = $filters['translatedQuery'];
         $filter = count($filter) > 0 ? $filter : null;
@@ -90,11 +96,34 @@ class ChatWithEmbeddingsController extends Controller
         $relative_context = '';
         foreach ($matches as $match) {
             $relative_context = $relative_context . $match['metadata']['content'] . ',';
+        }*/
+        //$userMessage = 'i want info about damac project';
+        $match = $this->mongoDBService->generatePipeline($userMessage);
+        if (is_string($match)) {
+            $cleanedString = str_replace('json', '', $match);
+            $jsonString = trim($cleanedString, "```");
+
+            $match = json_decode($jsonString, true); // Convert JSON string to PHP array
         }
+        $pipeline = $match;
+
+        $pipeline_result = DB::connection('mongodb')
+        ->getMongoDB()
+        ->selectCollection('realestate_test')
+        ->aggregate($pipeline)
+        ->toArray();
+
+        $matches = $pipeline_result;
+        $relative_context = '';
+        foreach ($matches as $match) {
+            $relative_context = $relative_context . $match['content'] . ',';
+        }
+
+        
 
         //$searchResults = $this->googleSearchService->web_search($userMessage);
 
-        return response()->stream(function () use ($userMessage, $relative_context) {
+        return response()->stream(function () use ($userMessage,$relative_context) {
 
             // Step 2: Start streaming
             $delay = 0.5; // You can adjust the delay (in seconds)
@@ -145,7 +174,7 @@ class ChatWithEmbeddingsController extends Controller
                     echo "data: " . json_encode(['message' => $chunk]) . "\n\n";
                     flush();     // Ensure the message is sent immediately to the client
                     ob_flush();
-                    usleep($delay * 100000);  // Sleep for the specified delay before sending the next chunk
+                    //usleep($delay * 100000);  // Sleep for the specified delay before sending the next chunk
                 }
             }
 

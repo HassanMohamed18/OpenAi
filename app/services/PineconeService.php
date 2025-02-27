@@ -94,7 +94,7 @@ class PineconeService
     public function queryVector(array $queryVector, $filters, int $topK)
     {
         try {
-              $filter = $filters ? $this->convertToPineconeFilter($filters) : null;
+            $filter = $filters ? $this->convertToPineconeFilter($filters) : null;
             $response = $this->pinecone->post("$this->pineconeUrl/query", [
                 'json' => [
                     'vector' => $queryVector,
@@ -131,9 +131,9 @@ class PineconeService
 
         // ]);
         // Step 1: Translate User Query into English
-        $translationPrompt = "make a question from the following query:
-Query: \"$userMessage\"
-Output:";
+        $translationPrompt = "make an english question from the following query:
+        Query: \"$userMessage\"
+        Output:";
 
         $translationRes = $this->client->chat()->create([
             'model' => 'gpt-4o',
@@ -152,51 +152,104 @@ Output:";
         // - property_type (string) 
         // - availability_status (string) 
         // - construction_status (string)
-       // - project_id (integer) equals 1 for damac project
+        // - project_id (integer) equals 1 for damac project
         // Step 2: Generate Filtered JSON from Translated Query
+        //         $systemPrompt = "You are an AI that converts natural language queries into structured JSON filters compatible with Pinecone's metadata fields.
+        // Ensure the following rules are strictly followed:
+
+        // ✅ Only use numeric values for numeric fields.
+        // ✅ Convert date-related values into Unix timestamps (seconds).
+        // ✅ Ignore conditions that try to filter a numeric field using a string.
+        // ✅ Ensure proper JSON formatting with no extra text.
+
+        // ### **Metadata Fields & Expected Data Types**
+        // - available_units (integer) ✅ **Example:** {\"available_units\": {\"\$gte\": 10}}
+        // - total_units (integer) ✅ **Example:** {\"total_units\": {\"\$lte\": 100}}
+        // - launch_date (Unix timestamp) ✅ **Example:** {\"launch_date\": {\"\$gte\": 1672531200}}
+        // - completion_date (Unix timestamp) ✅ **Example:** {\"completion_date\": {\"\$lte\": 1704067200}}
+        // - bedrooms (integer) 
+        // - bathrooms (integer) 
+
+
+        // ### **Examples of Invalid Filtering (Must Be Ignored)**
+        // ❌ **Query:** 'Find projects where available_units = \"damac\"'  
+        // ✅ **Expected Output:** `{}` (Invalid condition is ignored)
+
+        // Return only a valid JSON object, nothing else.";
+
+        //         $prompt = "Convert the following user query into a JSON filter:
+        // Query: \"$translatedQuery\"";
+
+        //         $res = $this->client->chat()->create([
+        //             'model' => 'gpt-4o',
+        //             'messages' => [
+        //                 ['role' => 'system', 'content' => $systemPrompt],
+        //                 ['role' => 'user', 'content' => $prompt]
+        //             ],
+        //             'temperature' => 0,
+        //             'max_tokens' => 100
+        //         ]);
+
+        //         $response = $res['choices'][0]['message']['content'] ?? "{}";
+
+        //         //$response = $res['choices'][0]['message']['content'];
+        //         $cleanedString = str_replace('json', '', $response);
+        //         $jsonString = trim($cleanedString, "```");
+        //         $filters = json_decode($jsonString, true);
+        //         return['filters' => $filters , 'translatedQuery' => $translatedQuery];
+        $apiKey = env('GEMINI_API_KEY');
         $systemPrompt = "You are an AI that converts natural language queries into structured JSON filters compatible with Pinecone's metadata fields.
-Ensure the following rules are strictly followed:
+        Ensure the following rules are strictly followed:
 
-✅ Only use numeric values for numeric fields.
-✅ Convert date-related values into Unix timestamps (seconds).
-✅ Ignore conditions that try to filter a numeric field using a string.
-✅ Ensure proper JSON formatting with no extra text.
+        ✅ Only use numeric values for numeric fields.
+        ✅ Convert date-related values into Unix timestamps (seconds).
+        ✅ Ignore conditions that try to filter a numeric field using a string.
+        ✅ Ensure proper JSON formatting with no extra text.
 
-### **Metadata Fields & Expected Data Types**
-- available_units (integer) ✅ **Example:** {\"available_units\": {\"\$gte\": 10}}
-- total_units (integer) ✅ **Example:** {\"total_units\": {\"\$lte\": 100}}
-- launch_date (Unix timestamp) ✅ **Example:** {\"launch_date\": {\"\$gte\": 1672531200}}
-- completion_date (Unix timestamp) ✅ **Example:** {\"completion_date\": {\"\$lte\": 1704067200}}
-- bedrooms (integer) 
-- bathrooms (integer) 
+        ### **Metadata Fields & Expected Data Types**
+        - available_units (integer) ✅ **Example:** {\"available_units\": {\"\$gte\": 10}}
+        - total_units (integer) ✅ **Example:** {\"total_units\": {\"\$lte\": 100}}
+        - launch_date (Unix timestamp) ✅ **Example:** {\"launch_date\": {\"\$gte\": 1672531200}}
+        - completion_date (Unix timestamp) ✅ **Example:** {\"completion_date\": {\"\$lte\": 1704067200}}
+        - bedrooms (integer) 
+        - bathrooms (integer) 
 
+        ### **Examples of Invalid Filtering (Must Be Ignored)**
+        ❌ **Query:** 'Find projects where available_units = \"damac\"'  
+        ✅ **Expected Output:** `{}` (Invalid condition is ignored)
 
-### **Examples of Invalid Filtering (Must Be Ignored)**
-❌ **Query:** 'Find projects where available_units = \"damac\"'  
-✅ **Expected Output:** `{}` (Invalid condition is ignored)
+        Return only a valid JSON object, nothing else.";
 
-Return only a valid JSON object, nothing else.";
+                $userPrompt = "Convert the following user query into a JSON filter:
+        Query: \"$translatedQuery\"";
 
-        $prompt = "Convert the following user query into a JSON filter:
-Query: \"$translatedQuery\"";
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . $apiKey;
 
-        $res = $this->client->chat()->create([
-            'model' => 'gpt-4o',
-            'messages' => [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'user', 'content' => $prompt]
-            ],
-            'temperature' => 0,
-            'max_tokens' => 100
+        $response = Http::post($apiUrl, [
+            'contents' => [
+                [
+                    'role' => 'user',
+                    'parts' => [['text' => $systemPrompt]]
+                ],
+                [
+                    'role' => 'user',
+                    'parts' => [['text' => $userPrompt]]
+                ]
+            ]
         ]);
 
-        $response = $res['choices'][0]['message']['content'] ?? "{}";
+        $data = $response->json();
+        $responseText = $data['candidates'][0]['content']['parts'][0]['text'] ?? "{}";
 
-        //$response = $res['choices'][0]['message']['content'];
-        $cleanedString = str_replace('json', '', $response);
+        // Clean and decode JSON response
+        $cleanedString = str_replace('json', '', $responseText);
         $jsonString = trim($cleanedString, "```");
         $filters = json_decode($jsonString, true);
-        return['filters' => $filters , 'translatedQuery' => $translatedQuery];
+
+        return [
+            'filters' => $filters ?? [],
+            'translatedQuery' => $translatedQuery
+        ];
     }
 
     private function convertToPineconeFilter($filters)

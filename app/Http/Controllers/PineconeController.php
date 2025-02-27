@@ -406,7 +406,7 @@ class PineconeController extends Controller
                     "bedrooms" => 3,
                     "bathrooms" => 2,
                     'project_id' => 1,
-                    
+
                 ]
             ],
             (object) [
@@ -756,12 +756,37 @@ class PineconeController extends Controller
     public function search(Request $request)
     {
 
+        // $pipeline = [
+        //     [
+        //         '$search' => [
+        //             'index' => 'realestate', // Use your MongoDB Atlas search index
+        //             'text' => [
+        //                 'query' => 'list all john users',
+        //                 'path' => ["name"], // List specific fields to search
+        //                 'fuzzy' => [
+        //                     'maxEdits' => 2, // Allows minor typos
+        //                     'prefixLength' => 1
+        //                 ]
+        //             ]
+        //         ]
+        //     ]
+        // ];
+        // return $pipeline = [ [ '$match' => [ 'name' => [ '$regex' => 'john', '$options' => 'i' ] ] ], [ '$limit' => 3 ] ];
+
+        // // Execute the aggregation query
+        // $users = DB::connection('mongodb')
+        //     ->getMongoDB()
+        //     ->selectCollection('users')
+        //     ->aggregate($pipeline)
+        //     ->toArray();
+
+        // return $users;
 
 
-        $userMessage = 'ايه المشروع اللى مكن يحقق اكبر فايده اقتصاديه فى خلال خمس سنين';
+        $userMessage = 'عايز اعرف معلومات عن مشروع دماك';
         $topk = 5;
 
-         $filters = $this->embeddingService->parseNaturalLanguageFilters($userMessage);
+        $filters = $this->embeddingService->parseNaturalLanguageFilters($userMessage);
         $filter = $filters['filters'];
         $translatedQuery = $filters['translatedQuery'];
         $pincone_filter = count($filter) > 0 ? $filter : null;
@@ -772,7 +797,7 @@ class PineconeController extends Controller
         }
 
         // Perform search in Pinecone
-         $RelativeContext = $this->embeddingService->queryVector($userEmbedding, $pincone_filter, 15);
+        return $RelativeContext = $this->embeddingService->queryVector($userEmbedding, $pincone_filter, 15);
         $matches = $RelativeContext['matches'];
         $results = '';
         foreach ($matches as $match) {
