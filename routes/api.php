@@ -64,6 +64,9 @@ Route::get('/mongo/delete', [MongoDBController::class, 'DeleteAllDocuments']);
 
 Route::get('/mongo/count', [MongoDBController::class, 'CountAllDocuments']);
 
+Route::get('/mongo/vector', [MongoDBController::class, 'mongoVectorSearch']);
+
+
 Route::post('/get-aggregated-data', [MongoDBController::class, 'retreiveData']);
 
 

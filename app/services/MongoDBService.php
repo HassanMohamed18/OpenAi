@@ -51,18 +51,39 @@ class MongoDBService
         //     'temperature' => 0.2,
         // ]);
 
-        $translationPrompt = "You are a real estate expert specializing in the United Arab Emirates. Translate the following real estate-related query into clear and precise English without changing its meaning:\n\n$query\n\nReturn only the translated query, nothing else.";
+        // $translationPrompt = "You are a real estate expert specializing in the United Arab Emirates. Translate the following real estate-related query into clear and precise English without changing its meaning:\n\n$query\n\nReturn only the translated query, nothing else.";
+
+        // $translationResponse = $this->client->chat()->create([
+        //     'model' => 'gpt-4o',
+        //     'messages' => [
+        //         ['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates. Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology.'],
+        //         ['role' => 'user', 'content' => $translationPrompt],
+        //     ],
+        //     'temperature' => 0.2,
+        // ]);
+
+        // $translatedQuestion = $translationResponse['choices'][0]['message']['content']; // Extract translated question
+
+        $translationPrompt = "You are a real estate expert specializing in the United Arab Emirates. Translate the following real estate-related query into clear and precise English without changing its meaning:\n\n$query\n\nIf the query is unclear, ambiguous, or does not make sense, return an empty string (`''`). Otherwise, return only the translated query, nothing else.";
 
         $translationResponse = $this->client->chat()->create([
             'model' => 'gpt-4o',
             'messages' => [
-                ['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates. Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology.'],
+                ['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates. Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology. If the query is unclear, ambiguous, or does not make sense, return an empty string (`\'\'`).'],
                 ['role' => 'user', 'content' => $translationPrompt],
             ],
             'temperature' => 0.2,
         ]);
 
-        $translatedQuestion = $translationResponse['choices'][0]['message']['content']; // Extract translated question
+        // Extract response
+        $translatedQuestion = trim($translationResponse['choices'][0]['message']['content'] ?? '');
+
+        // Ensure an empty string is returned if the response is invalid
+        if ($translatedQuestion === "''") {
+            $translatedQuestion = '';
+        }
+
+
 
 
         //     $collectionName = 'realestate';
@@ -191,6 +212,17 @@ class MongoDBService
             'translated_question' => $translatedQuestion,
             'pipeline' => $generatedPipeline
         ];
+    }
+
+    public function generateEmbedding(string $text)
+    {
+        //$json_data = json_encode($text);
+        $response = $this->client->embeddings()->create([
+            'model' => 'text-embedding-ada-002',
+            'input' => $text,
+        ]);
+
+        return $response['data'][0]['embedding'] ?? null;
     }
 
 

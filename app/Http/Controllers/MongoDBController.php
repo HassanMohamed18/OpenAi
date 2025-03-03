@@ -409,15 +409,28 @@ class MongoDBController extends Controller
 
         foreach ($projects as $project) {
             $content = '';
-            foreach($project as $key => $value){
-                if(in_array($key,["project_id","developer_id","location_id","project_size_sqmt",
-                "min_price_range_SQ","starting_price_range",
-                "location_description","table_name","created_at","updated_at","deleted_at"])){continue;}
+            foreach ($project as $key => $value) {
+                if (in_array($key, [
+                    "project_id",
+                    "developer_id",
+                    "location_id",
+                    "project_size_sqmt",
+                    "min_price_range_SQ",
+                    "starting_price_range",
+                    "location_description",
+                    "table_name",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at"
+                ])) {
+                    continue;
+                }
 
-                $content .= $key . ':' . $value.',';
+                $content .= $key . ':' . $value . ',';
             }
             $project->content = $content;
-            $project->area_name = $project->area_name .'/'.$project->region;
+            $project->embedding = $this->openAIService->generateEmbedding($content);
+            $project->area_name = $project->area_name . '/' . $project->region;
             $project->table_name = 'projects';
 
             if (isset($project->launch_date)) {
@@ -426,7 +439,6 @@ class MongoDBController extends Controller
             if (isset($project->completion_date)) {
                 $project->completion_date = strtotime($project->completion_date);
             }
-
 
             $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
             $project->min_price_range_SQ =  (int) filter_var($project->price_range_SQ, FILTER_SANITIZE_NUMBER_INT);
@@ -460,8 +472,7 @@ class MongoDBController extends Controller
             ]);
         });
 
-
-          $projects;
+        $projects;
 
 
         // $areas = DB::table('areas')
@@ -539,7 +550,6 @@ class MongoDBController extends Controller
                 'property_types.name as property_type',
                 'property_subtypes.name as property_subtype',
                 'locations.landmark'
-                // Excluded: properties.created_at, properties.updated_at, properties.dld_permit_number, properties.dld_barcode
             )->distinct('property_name')
             ->get();
 
@@ -553,15 +563,32 @@ class MongoDBController extends Controller
             $property->property_size =  (float) filter_var($property->size, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
             $content = '';
-                foreach($property as $key => $value){
-                    if(in_array($key,["project_id","developer_id","location_id","building_id","address_id",
-                    "dld_barcode","dld_permit_number","agent_license","broker_license","property_type_id",
-                    "property_subtype_id","table_name","created_at","updated_at","deleted_at"])){continue;}
-
-                    $content .= $key . ':' . $value.',';
+            foreach ($property as $key => $value) {
+                if (in_array($key, [
+                    "project_id",
+                    "developer_id",
+                    "location_id",
+                    "building_id",
+                    "address_id",
+                    "dld_barcode",
+                    "dld_permit_number",
+                    "agent_license",
+                    "broker_license",
+                    "property_type_id",
+                    "property_subtype_id",
+                    "table_name",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at"
+                ])) {
+                    continue;
                 }
-                $property->content = $content;
-                //$property->area_name = $property->area_name .'/'.$property->region;
+
+                $content .= $key . ':' . $value . ',';
+            }
+            $property->content = $content;
+            $property->embedding = $this->openAIService->generateEmbedding($content);
+            //$property->area_name = $property->area_name .'/'.$property->region;
 
             // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
 
@@ -593,24 +620,14 @@ class MongoDBController extends Controller
             ]);
         });
 
-         $properties;
+        $properties;
 
-        // $projects = $projects->toArray();
-        // // Insert into MongoDB
-        // foreach ($projects as $record) {
-        //     DB::connection('mongodb')->table('realestate')->insert($record);
-        // }
+        $realestate_ai_data = $projects->concat($properties);
 
-
-        // return response()->json([
-        //     'message' => 'Records inserted successfully!',
-        //     'data' => $projects
-        // ]);
-
-        $properties = $properties->toArray();
+        $realestate_ai_data = $realestate_ai_data->toArray();
         // Insert into MongoDB
-        foreach ($properties as $record) {
-            DB::connection('mongodb')->table('realestate')->insert($record);
+        foreach ($realestate_ai_data as $record) {
+            DB::connection('mongodb')->table('realestate_ai_test')->insert($record);
         }
 
 
@@ -623,7 +640,7 @@ class MongoDBController extends Controller
     public function search(Request $request)
     {
         // User query for filters and sorting
-        $query = 'افضل مطور عقارى ممكن اتعامل معاه';
+        $query = 'damac';
 
         // $results = DB::table('projects')->get();
         // return $results;
@@ -631,7 +648,7 @@ class MongoDBController extends Controller
         // Generate MongoDB pipeline dynamically using OpenAI
         $res = $this->openAIService->generatePipeline($query);
         // Ensure `$match` is an actual array, not a string
-         $match = $res['pipeline'];
+        $match = $res['pipeline'];
         if (is_string($match)) {
             // $cleanedString = str_replace('json', '', $match);
             // $jsonString = trim($cleanedString, "```");
@@ -680,21 +697,39 @@ class MongoDBController extends Controller
         //     ]
         // ];
         $relative_context = '';
+        $pipeline_result = '';
         if (!empty($pipeline)) {
-            $pipeline_result = DB::connection('mongodb')
+            $results = DB::connection('mongodb')
                 ->getMongoDB()
                 ->selectCollection('realestate_ai_test')
                 ->aggregate($pipeline)
                 ->toArray();
 
-            $matches = $pipeline_result;
-            $relative_context = [];
-            foreach ($matches as $match) {
-                $relative_context[] = $match['content'];
+            if (!empty($results)) {
+                $keysToExclude = ["_id", "embedding"];
+
+                $pipeline_result = array_map(function ($item) use ($keysToExclude) {
+                    // Convert BSONDocument to an array
+                    $itemArray = (array) $item;
+
+                    // Remove unwanted keys
+                    return array_diff_key($itemArray, array_flip($keysToExclude));
+                }, iterator_to_array($results)); // Convert MongoDB cursor to array
+
+
+
+                $matches = $pipeline_result;
+                $relative_context = [];
+                foreach ($matches as $match) {
+                    $relative_context[] = $match['content'];
+                }
+                $relative_context = implode("\n", $relative_context);
+            } else {
+                $pipeline_result = $this->mongoVectorSearch();
             }
-            $relative_context = implode("\n", $relative_context);
         } else {
-            $relative_context = 'No Relative Data';
+            //$relative_context = 'No Relative Data';
+            $pipeline_result = $this->mongoVectorSearch();
         }
 
         //return $relative_context;
@@ -821,5 +856,56 @@ class MongoDBController extends Controller
             'pipeline' => $pipeline,
             'results' => $relative_context
         ]);
+    }
+
+    public function createVectorSearchIndex()
+    {
+
+        DB::connection('mongodb')->getMongoDB()->selectCollection('realestate_ai_test')->createSearchIndex([
+            'name' => 'vector_index', // Index name
+            'definition' => [
+                'type' => 'vectorSearch',
+                'fields' => [
+                    [
+                        'type' => 'vector',
+                        'path' => 'embedding',
+                        'numDimensions' => 1536,
+                        'similarity' => 'cosine',
+                        'quantization' => 'scalar',
+                    ]
+                ]
+            ]
+        ]);
+
+        echo "Vector search index created successfully!";
+    }
+
+    public function mongoVectorSearch()
+    {
+        $userQuery = '';
+        $userEmbedding = $this->openAIService->generateEmbedding($userQuery);
+        $searchResults = DB::connection('mongodb')->getMongoDB()->selectCollection('realestate_ai_test')->aggregate([
+            [
+                '$vectorSearch' => [
+                    'index' => 'vector_index',
+                    'path' => 'embedding',
+                    'queryVector' => $userEmbedding,
+                    'numCandidates' => 100,
+                    'limit' => 5
+                ]
+            ],
+            [
+                '$project' => [
+                    'embedding' => 0 // Exclude the embedding field
+                ]
+            ]
+        ]);
+        return iterator_to_array($searchResults);
+
+        //return response()->json($searchResults);
+
+        // foreach ($searchResults as $result) {
+        //     print_r($result);
+        // }
     }
 }
