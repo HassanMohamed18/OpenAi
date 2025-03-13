@@ -64,26 +64,128 @@ class MongoDBService
 
         // $translatedQuestion = $translationResponse['choices'][0]['message']['content']; // Extract translated question
 
-        $translationPrompt = "You are a real estate expert specializing in the United Arab Emirates. Translate the following real estate-related query into clear and precise English without changing its meaning:\n\n$query\n\nIf the query is unclear, ambiguous, or does not make sense, return an empty string (`''`). Otherwise, return only the translated query, nothing else.";
+        // $translationPrompt = "You are a real estate expert specializing in the United Arab Emirates. Translate the following real estate-related query into clear and precise English without changing its meaning:\n\n$query\n\nIf the query is unclear, ambiguous, or does not make sense, return an empty string (`''`). Otherwise, return only the translated query, nothing else.";
+
+        // $translationResponse = $this->client->chat()->create([
+        //     'model' => 'gpt-4o',
+        //     'messages' => [
+        //         ['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates. Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology. If the query is unclear, ambiguous, or does not make sense, return an empty string (`\'\'`).'],
+        //         ['role' => 'user', 'content' => $translationPrompt],
+        //     ],
+        //     'temperature' => 0.2,
+        // ]);
+
+        // // Extract response
+        // $translatedQuestion = trim($translationResponse['choices'][0]['message']['content'] ?? '');
+
+        // // Ensure an empty string is returned if the response is invalid
+        // if ($translatedQuestion === "''") {
+        //     $translatedQuestion = '';
+        // }
+
+        // $translationPrompt = "Translate the following real estate-related query into clear and precise English without changing its meaning. Also, determine whether the query contains superlatives (e.g., best, cheapest, most luxurious), numbers, or dates. 
+
+        // If the query contains any of these, return:
+        // {\"translated_query\":\"[Translated Query]\",\"query_type\":\"non-vector\"}
+
+        // Otherwise, return:
+        // {\"translated_query\":\"[Translated Query]\",\"query_type\":\"vector\"}
+
+        // If the query is unclear, ambiguous, or does not make sense, return:
+        // {\"translated_query\": \"\",\"query_type\":\"vector\"}
+
+        // Query:
+        // $query";
+
+        // $translationPrompt = preg_replace('/\s+/', ' ', $translationPrompt);
+
+        // $translationResponse = $this->client->chat()->create([
+        //     'model' => 'gpt-4o',
+        //     'messages' => [
+        //         ['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates. Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology. Determine whether the query contains superlatives, numbers, or dates. If the query is unclear, ambiguous, or does not make sense, return an empty translated query and classify it as "non-vector".'],
+        //         ['role' => 'user', 'content' => $translationPrompt],
+        //     ],
+        //     'temperature' => 0.2,
+        // ]);
+
+        // // Extract response
+        // $responseContent = trim($translationResponse['choices'][0]['message']['content'] ?? '');
+
+        // // Decode JSON response from AI
+        // $responseData = json_decode($responseContent, true);
+
+        // // Ensure proper structure
+        // $translatedQuestion = $responseData['translated_query'] ?? '';
+        // $queryType = $responseData['query_type'] ?? 'non-vector'; // Default to "non-vector" if missing
+
+        // // If AI incorrectly returns an empty string as a response
+        // if ($translatedQuestion === "''") {
+        //     $translatedQuestion = '';
+        // }
+
+        // // Return final structured output
+        // return [
+        //     'translated_query' => $translatedQuestion,
+        //     'query_type' => $queryType,
+        //     'translationPrompt' => $translationPrompt,
+
+        // ];
+
+        // $translationPrompt = "Translate the following real estate query:\n\n$query\n\n into clear English without changing its meaning.
+        // Classify it as 'non-vector' if it contains superlatives (best, cheapest, most luxurious), numbers, or dates.  
+        // If unclear, return an empty translation as 'vector'. Otherwise, classify as 'vector'.  
+        // { \"translated_query\": \"[Translated Query]\", \"query_type\": \"[vector/non-vector]\" }.
+        // If the query is unclear, ambiguous, or does not make sense, return an empty Translated Query.
+        // ";
+
+
+        // $translationPrompt = "You are a real estate expert based in the United Arab Emirates.Translate the user query"
+        //     . " into clear English without changing its meaning."
+        //     . "If the query is not related on real estate return an empty translated query classified as 'vector'"
+        //     . "Classify it as 'non-vector' if it contains superlatives (best, cheapest, most luxurious), numbers, or dates."
+        //     //. "If unclear, return an empty translation as 'vector'. Otherwise, classify as 'vector'. "
+        //     . "{\"translated_query\":\"[Translated Query]\",\"query_type\":\"[vector/non-vector]\"}";
+
+            $systemPrompt = "You are a real estate expert based in the UAE."
+            ."Translate user queries into clear English while preserving meaning and considering local real estate terminology." 
+            ."If the query is not related on real estate return an empty translated query classified as 'vector'."
+            ."Classify as 'non-vector' if it contains superlatives (best, cheapest, most luxurious), numbers,keywords like (compare,order,sort) or dates."
+            ."Otherwise, classify as 'vector'."
+            ."Return:{\"translated_query\":\"[Translated Query]\",\"query_type\":\"[vector/non-vector]\"}";
+    
+            $userPrompt = "Query: $query";
+        //$systemPrompt = preg_replace('/\s+/', ' ', $systemPrompt);
 
         $translationResponse = $this->client->chat()->create([
             'model' => 'gpt-4o',
             'messages' => [
-                ['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates. Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology. If the query is unclear, ambiguous, or does not make sense, return an empty string (`\'\'`).'],
-                ['role' => 'user', 'content' => $translationPrompt],
+                ['role' => 'system', 'content' => $systemPrompt],
+                //['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates.Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology. Determine whether the query contains superlatives, numbers, or dates. If the query is unclear, ambiguous, or does not make sense, return an empty translated query and classify it as "vector".'],
+                ['role' => 'user', 'content' => $userPrompt],
             ],
             'temperature' => 0.2,
         ]);
 
-        // Extract response
-        $translatedQuestion = trim($translationResponse['choices'][0]['message']['content'] ?? '');
+         $responseContent = trim($translationResponse['choices'][0]['message']['content'] ?? '');
 
-        // Ensure an empty string is returned if the response is invalid
+        // Decode JSON response from AI
+        $responseData = json_decode($responseContent, true);
+
+        // Ensure proper structure
+        $translatedQuestion = $responseData['translated_query'] ?? '';
+        $queryType = $responseData['query_type'] ?? 'vector'; // Default to "non-vector" if missing
+
+        // If AI incorrectly returns an empty string as a response
         if ($translatedQuestion === "''") {
             $translatedQuestion = '';
         }
 
-
+        // Return final structured output
+        return [
+            'translated_query' => $translatedQuestion,
+            'query_type' => $queryType,
+            'translationPrompt' => $systemPrompt,
+        ];
 
 
         //     $collectionName = 'realestate';
@@ -169,6 +271,8 @@ class MongoDBService
         // // Remove extra spaces, newlines, and tabs
         // $prompt = preg_replace('/\s+/', ' ', $prompt);
 
+
+
         $collectionName = 'realestate_ai_test';
 
         $schema = "The MongoDB collection '$collectionName' contains data related to real estate projects and properties. "
@@ -193,7 +297,13 @@ class MongoDBService
         // Remove extra spaces, newlines, and tabs
         $prompt = preg_replace('/\s+/', ' ', $prompt);
 
-
+        if (!$translatedQuestion) {
+            return [
+                'prompt' => $prompt,
+                'translated_question' => $translatedQuestion,
+                'pipeline' => []
+            ];
+        }
         // Call OpenAI API
         $response = $this->client->chat()->create([
             'model' => 'gpt-4o', // Use GPT-4 for better structured responses

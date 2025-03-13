@@ -107,17 +107,54 @@ class ChatWithEmbeddingsController extends Controller
         }
         $pipeline = $match;
 
-        $pipeline_result = DB::connection('mongodb')
-        ->getMongoDB()
-        ->selectCollection('realestate_test')
-        ->aggregate($pipeline)
-        ->toArray();
+        // $pipeline_result = DB::connection('mongodb')
+        // ->getMongoDB()
+        // ->selectCollection('realestate_test')
+        // ->aggregate($pipeline)
+        // ->toArray();
 
-        $matches = $pipeline_result;
+        // $matches = $pipeline_result;
+        // $relative_context = '';
+        // foreach ($matches as $match) {
+        //     $relative_context = $relative_context . $match['content'] . ',';
+        // }
+
         $relative_context = '';
-        foreach ($matches as $match) {
-            $relative_context = $relative_context . $match['content'] . ',';
+        $pipeline_result = '';
+        if (!empty($pipeline)) {
+            $results = DB::connection('mongodb')
+                ->getMongoDB()
+                ->selectCollection('realestate_ai_test')
+                ->aggregate($pipeline)
+                ->toArray();
+
+            if (!empty($results)) {
+                $keysToExclude = ["_id", "embedding"];
+
+                $pipeline_result = array_map(function ($item) use ($keysToExclude) {
+                    // Convert BSONDocument to an array
+                    $itemArray = (array) $item;
+
+                    // Remove unwanted keys
+                    return array_diff_key($itemArray, array_flip($keysToExclude));
+                }, iterator_to_array($results)); // Convert MongoDB cursor to array
+
+
+
+            } else {
+                $pipeline_result = $this->mongoVectorSearch($userMessage);
+            }
+        } else {
+            //$relative_context = 'No Relative Data';
+            $pipeline_result = $this->mongoVectorSearch($userMessage);
         }
+        
+        $matches = $pipeline_result;
+        $relative_context = [];
+        foreach ($matches as $match) {
+            $relative_context[] = $match['content'];
+        }
+        $relative_context = implode("\n", $relative_context);
 
         
 
@@ -186,5 +223,42 @@ class ChatWithEmbeddingsController extends Controller
             'Cache-Control' => 'no-cache',
             'Connection' => 'keep-alive',
         ]);
+    }
+
+
+
+
+    public function mongoVectorSearch($userQuery)
+    {
+        
+        $response = $this->client->embeddings()->create([
+            'model' => 'text-embedding-ada-002',
+            'input' => $userQuery,
+        ]);
+
+        $userEmbedding =  $response['data'][0]['embedding'] ?? null;
+        $searchResults = DB::connection('mongodb')->getMongoDB()->selectCollection('realestate_ai_test')->aggregate([
+            [
+                '$vectorSearch' => [
+                    'index' => 'vector_index',
+                    'path' => 'embedding',
+                    'queryVector' => $userEmbedding,
+                    'numCandidates' => 100,
+                    'limit' => 5
+                ]
+            ],
+            [
+                '$project' => [
+                    'embedding' => 0 // Exclude the embedding field
+                ]
+            ]
+        ]);
+        return iterator_to_array($searchResults);
+
+        //return response()->json($searchResults);
+
+        // foreach ($searchResults as $result) {
+        //     print_r($result);
+        // }
     }
 }

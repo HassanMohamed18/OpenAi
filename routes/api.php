@@ -59,12 +59,18 @@ Route::get('/session', [WebRTCController::class, 'getSessionToken']);
 
 Route::get('/mongo/search', [MongoDBController::class, 'search']);
 Route::get('/mongo/store', [MongoDBController::class, 'store']);
-
+Route::get('/mongo/rename', [MongoDBController::class, 'RenameCollection']);
 Route::get('/mongo/delete', [MongoDBController::class, 'DeleteAllDocuments']);
 
 Route::get('/mongo/count', [MongoDBController::class, 'CountAllDocuments']);
 
 Route::get('/mongo/vector', [MongoDBController::class, 'mongoVectorSearch']);
+
+Route::get('/mongo/hybrid', [MongoDBController::class, 'mongoReRankedSearch']);
+
+
+Route::get('/mongo/vector_mo', [MongoDBController::class, 'mongoVectorSearchTest']);
+
 
 
 Route::post('/get-aggregated-data', [MongoDBController::class, 'retreiveData']);
