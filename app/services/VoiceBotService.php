@@ -59,7 +59,7 @@ class VoiceBotService
 
     public function generateSpeech($text)
 {
-    $apiKey = 'your-api-key'; // Replace with your OpenAI API key
+
     $url = "https://api.openai.com/v1/audio/speech";
 
     // Make the API request
@@ -72,6 +72,7 @@ class VoiceBotService
         "input" => $text
     ]);
 
+    return $response;
     // Check for errors
     if ($response->failed()) {
         return response()->json(['error' => 'Failed to generate speech', 'response' => $response->body()], $response->status());

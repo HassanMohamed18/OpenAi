@@ -2,15 +2,19 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Http;
 use OpenAI;
 
 class MongoDBService
 {
     protected $client;
+    protected $apiKey;
+
 
     public function __construct()
     {
         $this->client = OpenAI::client(env('OPENAI_API_KEY'));
+        $this->apiKey = env('GEMINI_API_KEY');
     }
 
     public function generatePipeline($query)
@@ -146,18 +150,19 @@ class MongoDBService
         //     //. "If unclear, return an empty translation as 'vector'. Otherwise, classify as 'vector'. "
         //     . "{\"translated_query\":\"[Translated Query]\",\"query_type\":\"[vector/non-vector]\"}";
 
-            $systemPrompt = "You are a real estate expert based in the UAE."
-            ."Translate user queries into clear English while preserving meaning and considering local real estate terminology." 
-            ."If the query is not related on real estate return an empty translated query classified as 'vector'."
-            ."Classify as 'non-vector' if it contains superlatives (best, cheapest, most luxurious), numbers,keywords like (compare,order,sort) or dates."
-            ."Otherwise, classify as 'vector'."
-            ."Return:{\"translated_query\":\"[Translated Query]\",\"query_type\":\"[vector/non-vector]\"}";
-    
-            $userPrompt = "Query: $query";
+        $systemPrompt = "You are a real estate expert based in the UAE."
+            . "Translate user queries into clear English while preserving meaning and considering local real estate terminology."
+            . "If the query is not related on real estate return an empty translated query classified as 'vector'."
+            . "Classify as 'non-vector' if it contains superlatives (best, cheapest, most luxurious), numbers,keywords like (compare,order,sort) ,dates or counts."
+            . "Otherwise, classify as 'vector'."
+            ."Ensure that translate apartment and unit keywords or similar keywords into property"
+            . "Return:{\"translated_query\":\"[Translated Query]\",\"query_type\":\"[vector/non-vector]\"}";
+
+        $userPrompt = "Query: $query";
         //$systemPrompt = preg_replace('/\s+/', ' ', $systemPrompt);
 
         $translationResponse = $this->client->chat()->create([
-            'model' => 'gpt-4o',
+            'model' => 'gpt-4o-mini',
             'messages' => [
                 ['role' => 'system', 'content' => $systemPrompt],
                 //['role' => 'system', 'content' => 'You are a real estate expert based in the United Arab Emirates.Translate user queries into precise English while maintaining their original meaning and considering local real estate market terminology. Determine whether the query contains superlatives, numbers, or dates. If the query is unclear, ambiguous, or does not make sense, return an empty translated query and classify it as "vector".'],
@@ -166,9 +171,29 @@ class MongoDBService
             'temperature' => 0.2,
         ]);
 
-         $responseContent = trim($translationResponse['choices'][0]['message']['content'] ?? '');
+        $responseContent = trim($translationResponse['choices'][0]['message']['content'] ?? '');
 
-        // Decode JSON response from AI
+        // // Decode JSON response from AI
+        // $responseData = json_decode($responseContent, true);
+
+        // $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . $this->apiKey;
+
+        // $response = Http::post($apiUrl, [
+        //     'system_instruction' => [
+        //         'parts' => [['text' => $systemPrompt]]
+        //     ],
+        //     'contents' => [
+        //         [
+        //             //'role' => 'user',
+        //             'parts' => [['text' => $userPrompt]]
+        //         ]
+        //     ]
+        // ]);
+
+
+        // $data = $response->json();
+        // //dd($data);
+        // $responseContent = trim($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
         $responseData = json_decode($responseContent, true);
 
         // Ensure proper structure
@@ -177,15 +202,15 @@ class MongoDBService
 
         // If AI incorrectly returns an empty string as a response
         if ($translatedQuestion === "''") {
-            $translatedQuestion = '';
+            $translatedQuestion = null;
         }
 
         // Return final structured output
-        return [
-            'translated_query' => $translatedQuestion,
-            'query_type' => $queryType,
-            'translationPrompt' => $systemPrompt,
-        ];
+        // return [
+        //     'translated_query' => $translatedQuestion,
+        //     'query_type' => $queryType,
+        //     'translationPrompt' => $systemPrompt,
+        // ];
 
 
         //     $collectionName = 'realestate';
@@ -271,16 +296,16 @@ class MongoDBService
         // // Remove extra spaces, newlines, and tabs
         // $prompt = preg_replace('/\s+/', ' ', $prompt);
 
+        //table_name (string) [Allowed values: 'projects', 'properties'] and 
 
-
-        $collectionName = 'realestate_ai_test';
+        $collectionName = 'realestate';
 
         $schema = "The MongoDB collection '$collectionName' contains data related to real estate projects and properties. "
-            . "Schema details are as follows: Projects Table (`projects`): project_name (string), project_type (string) [Allowed values: 'residential', 'commercial'], "
+            . "Schema details are as follows: table_name (string) [Allowed values: 'projects', 'properties'] and Projects Table (`projects`): project_name (string), project_type (string) [Allowed values: 'residential', 'commercial'], "
             . "total_units (numeric), available_units (numeric), landmark (string),"
             . "project_size (string), area_name (string), dld_area_name (string), developer_name (string), starting_price_range (numeric), "
             . "min_price_range_SQ (numeric), project_size_sqmt (numeric). "
-            . "Properties Table (`properties`): property_size (numeric), property_price (numeric), project_name (string), landmark (string). "
+            . "Properties Table (`properties`): property_name(string), property_type (string) [Allowed values: 'residential', 'commercial'],area_name(string),property_size (numeric), property_price (numeric), project_name (string), landmark (string). "
             . "Ensure that any queries or operations correctly distinguish between `projects` and `properties` based on the relevant fields. "
             . "All date fields (`launch_date`, `completion_date`) must be treated as Unix timestamps (seconds).";
 
@@ -290,9 +315,15 @@ class MongoDBService
             . "Ignore `null` values in sorting. **Do not include \$addFields, \$multiply,\$add or any computed fields, even if required by the query.** "
             . "Limit: Always return 3 results. Filtering Logic: Use multiple filters if applicable. Ensure numeric fields are compared numerically. "
             . "Use regex for strings but avoid `^` and `$` anchors. Ignore invalid type comparisons (e.g., string filtering on numeric fields). "
+            //. "**Counting:** Use **\$group** to count documents for each `table_name` (projects, properties) . "
             //. "Date Handling: Always treat `project_launch_date` and `project_completion_date` as Unix timestamps (seconds) in any date-related operations. "
+            . "For counting, use the **\$group**  stage to count occurrences of `projects` and `properties` separately based on `table_name`. "
+            . "** Do Not Limit Results:** If counting, do not apply **\$limit** to the result. "
+            
+            //. "If the query requires an individual count for projects or properties, return them separately.";
+
             . "Field Selection: Return all fields unless specified otherwise. "
-            . "Output Restrictions: Return only a valid JSON array (no extra text). Return `{}` if no matching data exists.";
+            . "Output Restrictions: Return only a valid JSON array (no extra text,explaination or comments). Return `{}` if no matching data exists.";
 
         // Remove extra spaces, newlines, and tabs
         $prompt = preg_replace('/\s+/', ' ', $prompt);
@@ -306,7 +337,7 @@ class MongoDBService
         }
         // Call OpenAI API
         $response = $this->client->chat()->create([
-            'model' => 'gpt-4o', // Use GPT-4 for better structured responses
+            'model' => 'gpt-4o-mini', // Use GPT-4 for better structured responses
             'messages' => [
                 ['role' => 'system', 'content' => 'You are an expert MongoDB query builder.'],
                 ['role' => 'user', 'content' => $prompt],
@@ -316,6 +347,22 @@ class MongoDBService
 
         // Extract the generated content
         $generatedPipeline = $response->choices[0]->message->content;
+        // $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . $this->apiKey;
+
+        // $response = Http::post($apiUrl, [
+        //     'system_instruction' => [
+        //         'parts' => [['text' => 'You are an expert MongoDB query builder.']]
+        //     ],
+        //     'contents' => [
+        //         [
+        //             //'role' => 'user',
+        //             'parts' => [['text' => $userPrompt]]
+        //         ]
+        //     ]
+        // ]);
+
+        // $data = $response->json();
+        // $generatedPipeline = $data['candidates'][0]['content']['parts'][0]['text'];
 
         return [
             'prompt' => $prompt,

@@ -294,10 +294,10 @@
             const chatCreateEvent = {
                 type: "response.create",
                 response: {
-                    modalities: ["text"],
+                    modalities: ["text", "audio"],
                     instructions: chatprompt,
                     max_output_tokens: 1000,
-                   // temperature: 0.7
+                    // temperature: 0.7
                 }
             };
 
@@ -364,16 +364,19 @@
                 pc.ontrack = e => audioEl.srcObject = e.streams[0];
 
                 // ✅ Generate a silent audio track to satisfy OpenAI's SDP requirement
-                const ctx = new AudioContext();
-                const oscillator = ctx.createOscillator();
-                const dst = ctx.createMediaStreamDestination();
-                oscillator.connect(dst);
-                oscillator.start();
+                // const ctx = new AudioContext();
+                // const oscillator = ctx.createOscillator();
+                // const dst = ctx.createMediaStreamDestination();
+                // oscillator.connect(dst);
+                // oscillator.start();
 
-                const silentStream = dst.stream;
-                const silentTrack = silentStream.getAudioTracks()[0]; // Silent track
-                pc.addTrack(silentTrack, silentStream);
-
+                // const silentStream = dst.stream;
+                // const silentTrack = silentStream.getAudioTracks()[0]; // Silent track
+                // pc.addTrack(silentTrack, silentStream);
+                const ms = await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
+                pc.addTrack(ms.getTracks()[0]);
 
 
 
@@ -430,7 +433,7 @@
                                 stage = 2
 
                             } else if (stage == 2) {
-                               // addMessage("AI", aiMessage);
+                                // addMessage("AI", aiMessage);
                                 stage = -1
 
                             } else {
@@ -444,7 +447,7 @@
                         console.warn("⚠️ No valid response output:", receivedEvent.response);
                     }
                 } else if (receivedEvent.type === "response.text.delta" && stage == 2) {
-                    
+
                     if (!stream) {
                         let sender = "AI"
                         const chatBox = document.getElementById("chatBox");
@@ -465,11 +468,11 @@
                         chatBox.scrollTop = chatBox.scrollHeight;
                         stream = true;
                     }
-                   // addMessage("AI", receivedEvent.delta);
-                   messageDiv.innerHTML += receivedEvent.delta.replace(/\n/g, '<br>');
+                    // addMessage("AI", receivedEvent.delta);
+                    messageDiv.innerHTML += receivedEvent.delta.replace(/\n/g, '<br>');
                     console.log(receivedEvent.delta)
 
-                }else if (receivedEvent.type === "response.text.done" && stage == 2) {
+                } else if (receivedEvent.type === "response.text.done" && stage == 2) {
                     stream = false
                     stage = -1
                 }

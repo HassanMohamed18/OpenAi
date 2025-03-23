@@ -18,9 +18,10 @@ class VoiceChatController extends Controller
 
     public function index(){
 
-            return view('voicebot');
+        return 'sdsd';    
+        return view('voicebot');
     }
-    public function processAudio(Request $request)
+    public function AudioBot(Request $request)
     {
         // $request->validate([
         //     'audio' => 'required|file|mimes:mp3,wav',
@@ -28,13 +29,14 @@ class VoiceChatController extends Controller
 
         // Store the uploaded audio
         //$audioPath = $request->file('audio')->store('uploads', 'public');
-        $audioPath = 'uploads/Recording (3).m4a';
-        // Transcribe the audio
-        $text = $this->voiceBotService->transcribeAudio(storage_path("app/public/{$audioPath}"));
+        // $audioPath = 'uploads/Recording (3).m4a';
+        // // Transcribe the audio
+        // $text = $this->voiceBotService->transcribeAudio(storage_path("app/public/{$audioPath}"));
 
-        // Get GPT response
-        $gptResponse = $this->voiceBotService->chatWithGPT($text);
+        // // Get GPT response
+        // $gptResponse = $this->voiceBotService->chatWithGPT($text);
 
+        $gptResponse = 'hello';
         // Generate speech from GPT response
         $speechUrl = $this->voiceBotService->generateSpeech($gptResponse);
 

@@ -63,6 +63,7 @@ class VoiceBotStreamService
             "input" => $text
         ]);
     
+        return $response();
         // Check for errors
         if ($response->failed()) {
             return response()->json(['error' => 'Failed to generate speech', 'response' => $response->body()], $response->status());

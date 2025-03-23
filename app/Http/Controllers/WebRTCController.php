@@ -15,7 +15,7 @@ class WebRTCController extends Controller
             'Authorization' => 'Bearer ' . $apiKey,
             'Content-Type'  => 'application/json',
         ])->post('https://api.openai.com/v1/realtime/sessions', [
-            "model" => "gpt-4o-realtime-preview-2024-12-17",
+            "model" => "gpt-4o-mini-realtime-preview-2024-12-17",
             "modalities" => ["text"],         
         ]);
 

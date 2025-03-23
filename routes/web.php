@@ -5,6 +5,7 @@ use App\Http\Controllers\ChatWithMySqlDatabaseController;
 use App\Http\Controllers\GeminiController;
 use App\Http\Controllers\OllamaController;
 use App\Http\Controllers\StreamController;
+use App\Http\Controllers\TextToSpeechController;
 use App\Http\Controllers\VoiceBotController;
 use App\Http\Controllers\VoiceChatController;
 use App\Http\Controllers\VoiceSessionController;
@@ -60,4 +61,15 @@ Route::post('/gemini/chat', [GeminiController::class, 'chat']);
 
 Route::get('/mongo', function () {
     return view('mongo');
+});
+
+Route::get('/tts', function () {
+    return view('tts');
+});
+
+Route::post('/tts-stream', [TextToSpeechController::class, 'stream']);
+
+
+Route::get('/transcripe', function () {
+    return view('stt');
 });

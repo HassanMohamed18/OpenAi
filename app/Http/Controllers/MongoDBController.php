@@ -6,12 +6,15 @@ use App\Services\MongoDBService;
 use Illuminate\Http\Request;
 use App\Services\OpenAIService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use MongoDB\Laravel\Eloquent\Model;
+
+use function Laravel\Prompts\select;
 
 class MongoDBController extends Controller
 {
     protected $openAIService;
-    
+
 
     public function __construct(MongoDBService $openAIService)
     {
@@ -20,7 +23,7 @@ class MongoDBController extends Controller
 
     public function store()
     {
-        set_time_limit(300); 
+        set_time_limit(300);
         // $records = [
         //     [
         //         'content' => 'Damac Lagoons - Costa Brava 2 is a luxurious residential project by DAMAC, located near Hessa Street, Dubai. Offering 497 total units with 320 still available, this development brings Caribbean-inspired waterfront living. Launched on February 1, 2021, and expected to be completed by July 29, 2025, it provides world-class amenities and breathtaking views. Prices start from AED 1,535,000, with a price per square meter of AED 1,200. Conveniently positioned near major roads like Mohammed Bin Zayed Road, Emirates Road, and Al Khail Road, it offers seamless connectivity. Landmarks nearby include DAMAC Lagoons projects.',
@@ -362,118 +365,107 @@ class MongoDBController extends Controller
 
         // $convertedRecords;
 
-        $projects = DB::table('projects')
-            ->leftJoin('locations', 'projects.location_id', '=', 'locations.location_id')
-            ->leftJoin('areas', 'locations.area_id', '=', 'areas.area_id')
-            ->leftJoin('dld_areas', 'areas.dld_area_id', '=', 'dld_areas.dld_area_id')
-            ->leftJoin('developers', 'projects.developer_id', '=', 'developers.developer_id')
-            ->select(
-                'projects.*',
-                'locations.description as location_description',
-                'locations.longitude',
-                'locations.latitude',
-                'locations.landmark',
-                'locations.west_side',
-                'locations.east_side',
-                'locations.south_side',
-                'locations.north_side',
-                'locations.google_map_link',
-                'areas.area_name',
-                'areas.region',
-                'dld_areas.dld_area_name',
-                'developers.name as developer_name'
-            )->distinct('project_name')
-            ->get();
+        // $projects = DB::table('projects')
+        //     ->leftJoin('locations', 'projects.location_id', '=', 'locations.location_id')
+        //     ->leftJoin('areas', 'locations.area_id', '=', 'areas.area_id')
+        //     ->leftJoin('dld_areas', 'areas.dld_area_id', '=', 'dld_areas.dld_area_id')
+        //     ->leftJoin('developers', 'projects.developer_id', '=', 'developers.developer_id')
+        //     ->select(
+        //         'projects.*',
+        //         'locations.description as location_description',
+        //         'locations.longitude',
+        //         'locations.latitude',
+        //         'locations.landmark',
+        //         'locations.west_side',
+        //         'locations.east_side',
+        //         'locations.south_side',
+        //         'locations.north_side',
+        //         'locations.google_map_link',
+        //         'areas.area_name',
+        //         'areas.region',
+        //         'dld_areas.dld_area_name',
+        //         'developers.name as developer_name'
+        //     )->distinct('project_name')
+        //     ->get();
 
-        // foreach ($projects as $project) {
-        //     $project->table_name = 'projects';
 
-        //     if (isset($project->launch_date)) {
-        //         $project->launch_date = strtotime($project->launch_date);
+        //     foreach ($projects as $project) {
+        //         $content = '';
+        //         foreach ($project as $key => $value) {
+        //             if (in_array($key, [
+        //                 "developer_id",
+        //                 "location_id",
+        //                 "project_size_sqmt",
+        //                 "min_price_range_SQ",
+        //                 "starting_price_range",
+        //                 "location_description",
+        //                 "table_name",
+        //                 "created_at",
+        //                 "updated_at",
+        //                 "deleted_at"
+        //             ])) {
+        //                 continue;
+        //             }
+
+        //             $content .= $key . ':' . $value . ',';
+        //         }
+        //         $project->content = $content;
+        //         $project->embedding = $this->openAIService->generateEmbedding($content);
+        //         $project->area_name = $project->area_name . '/' . $project->region;
+        //         $project->table_name = 'projects';
+
+        //         if (isset($project->launch_date)) {
+        //             $project->launch_date = strtotime($project->launch_date);
+        //         }
+        //         if (isset($project->completion_date)) {
+        //             $project->completion_date = strtotime($project->completion_date);
+        //         }
+
+        //         $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
+        //         $project->min_price_range_SQ =  (int) filter_var($project->price_range_SQ, FILTER_SANITIZE_NUMBER_INT);
+        //         $project->project_size_sqmt =  (float) filter_var($project->project_size, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        //         // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
         //     }
-        //     if (isset($project->completion_date)) {
-        //         $project->completion_date = strtotime($project->completion_date);
+
+        //     $projects = collect($projects)->map(function ($item) {
+
+        //         return collect($item)->except([
+        //             'created_at',
+        //             'updated_at',
+        //             'deleted_at',
+        //             'location_id',
+        //             'developer_id',
+        //             'project_size',
+        //             'price_range_SQ',
+        //             'price_range',
+        //             'google_map_link',
+        //             'north_side',
+        //             'south_side',
+        //             'east_side',
+        //             'west_side',
+        //             'location_description',
+        //             'description',
+        //             'region'
+
+
+        //             // 'longitude',
+        //             // 'latitude',
+        //         ]);
+        //     });
+
+        //   return $projects;
+
+        //     $realestate_ai_data = $projects->toArray();
+        //     // Insert into MongoDB
+        //     foreach ($realestate_ai_data as $record) {
+        //         DB::connection('mongodb')->table('realestate_ai_test')->insert($record);
         //     }
 
 
-        //     $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
-        //     $project->min_price_range_SQ =  (int) filter_var($project->price_range_SQ, FILTER_SANITIZE_NUMBER_INT);
-        //     $project->project_size_sqmt =  (float) filter_var($project->project_size, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        //     // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
-
-
-        //     // //$numbers = array_map('intval', $matches[0]);
-        //     // $project->min_price_range_SQ = $matches;
-        //     // $project->max_price_range_SQ = $matches;
-        // }
-
-
-
-        foreach ($projects as $project) {
-            $content = '';
-            foreach ($project as $key => $value) {
-                if (in_array($key, [
-                    "developer_id",
-                    "location_id",
-                    "project_size_sqmt",
-                    "min_price_range_SQ",
-                    "starting_price_range",
-                    "location_description",
-                    "table_name",
-                    "created_at",
-                    "updated_at",
-                    "deleted_at"
-                ])) {
-                    continue;
-                }
-
-                $content .= $key . ':' . $value . ',';
-            }
-            $project->content = $content;
-            $project->embedding = $this->openAIService->generateEmbedding($content);
-            $project->area_name = $project->area_name . '/' . $project->region;
-            $project->table_name = 'projects';
-
-            if (isset($project->launch_date)) {
-                $project->launch_date = strtotime($project->launch_date);
-            }
-            if (isset($project->completion_date)) {
-                $project->completion_date = strtotime($project->completion_date);
-            }
-
-            $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
-            $project->min_price_range_SQ =  (int) filter_var($project->price_range_SQ, FILTER_SANITIZE_NUMBER_INT);
-            $project->project_size_sqmt =  (float) filter_var($project->project_size, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-            // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
-        }
-
-        $projects = collect($projects)->map(function ($item) {
-
-            return collect($item)->except([
-                'created_at',
-                'updated_at',
-                'deleted_at',
-                'location_id',
-                'developer_id',
-                'project_size',
-                'price_range_SQ',
-                'price_range',
-                'google_map_link',
-                'north_side',
-                'south_side',
-                'east_side',
-                'west_side',
-                'location_description',
-                'description',
-                'region'
-
-
-                // 'longitude',
-                // 'latitude',
-            ]);
-        });
-
-        $projects;
+        //     return response()->json([
+        //         'message' => 'Records inserted successfully!',
+        //         //'data' => $properties
+        //     ]);
 
 
         // $areas = DB::table('areas')
@@ -533,14 +525,13 @@ class MongoDBController extends Controller
         // return $areas;
 
 
-
-
-
-         $properties = DB::table('properties')
+          return $properties = DB::table('properties')
             ->leftJoin('projects', 'properties.project_id', '=', 'projects.project_id')
             ->leftJoin('developers', 'projects.developer_id', '=', 'developers.developer_id')
+           
             //->leftJoin('addresses', 'properties.address_id', '=', 'addresses.address_id')
             ->leftJoin('locations', 'projects.location_id', '=', 'locations.location_id')
+            ->leftJoin('areas', 'locations.area_id', '=', 'areas.area_id')
             ->leftJoin('buildings', 'properties.building_id', '=', 'buildings.building_id')
             ->leftJoin('property_types', 'properties.property_type_id', '=', 'property_types.id')
             ->leftJoin('property_subtypes', 'properties.property_subtype_id', '=', 'property_subtypes.id')
@@ -553,10 +544,19 @@ class MongoDBController extends Controller
                 'buildings.building_name',
                 'property_types.name as property_type',
                 'property_subtypes.name as property_subtype',
-                'locations.landmark'
-            )->distinct('property_name')
+                'locations.landmark',
+                'areas.area_name as area_name',
+                'areas.region as region'
+
+            )
+            // ->groupBy('property_name')
+            // ->orderBy('property_id','asc')
+            // ->skip(0)
+            // ->take(522)
             ->get();
 
+           $property_embeddings =  DB::table('embeddings')->whereNotNull('property_id')->get();
+                $property_embeddings = collect($property_embeddings);
         foreach ($properties as $property) {
             $property->table_name = 'properties';
             // $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
@@ -569,7 +569,7 @@ class MongoDBController extends Controller
             $content = '';
             foreach ($property as $key => $value) {
                 if (in_array($key, [
-                    "project_id",
+                    //"project_id",
                     "developer_id",
                     "location_id",
                     "building_id",
@@ -583,7 +583,8 @@ class MongoDBController extends Controller
                     "table_name",
                     "created_at",
                     "updated_at",
-                    "deleted_at"
+                    "deleted_at",
+                    
                 ])) {
                     continue;
                 }
@@ -591,8 +592,11 @@ class MongoDBController extends Controller
                 $content .= $key . ':' . $value . ',';
             }
             $property->content = $content;
-            $property->embedding = $this->openAIService->generateEmbedding($content);
-            //$property->area_name = $property->area_name .'/'.$property->region;
+            $embedding = $property_embeddings->where('property_id',$property->property_id)->first();
+            $vector = json_decode($embedding->embedding,true);
+            $property->embedding = $vector;
+            //$property->embedding = $this->openAIService->generateEmbedding($content);
+            $property->area_name = $property->area_name .'/'.$property->region;
 
             // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
 
@@ -603,7 +607,7 @@ class MongoDBController extends Controller
         }
 
 
-        $properties = collect($properties)->map(function ($item) {
+         $properties = collect($properties)->map(function ($item) {
             return collect($item)->except([
                 'created_at',
                 'updated_at',
@@ -619,13 +623,14 @@ class MongoDBController extends Controller
                 'agent_license',
                 'building_id',
                 'building_id',
-                'address_id'
+                'address_id',
+                'region'
             ]);
         });
 
-        $realestate_ai_data = $projects->concat($properties);
+        //$realestate_ai_data = $projects->concat($properties);
 
-        $realestate_ai_data = $realestate_ai_data->toArray();
+        $realestate_ai_data = $properties->toArray();
         // Insert into MongoDB
         foreach ($realestate_ai_data as $record) {
             DB::connection('mongodb')->table('realestate')->insert($record);
@@ -640,15 +645,14 @@ class MongoDBController extends Controller
 
     public function search(Request $request)
     {
-       
 
-        $query = 'كلمنى عن العقارات';
+        $query = 'رشحلى افضل شقه من حيث الفرص الاستثماريه خلال خمس سنوات فى منطقة دبى';
 
         // $results = DB::table('projects')->get();
         // return $results;
 
         // Generate MongoDB pipeline dynamically using OpenAI
-          return $res = $this->openAIService->generatePipeline($query);
+        $res = $this->openAIService->generatePipeline($query);
         // Ensure `$match` is an actual array, not a string
         $match = $res['pipeline'];
         if (is_string($match)) {
@@ -723,11 +727,11 @@ class MongoDBController extends Controller
 
 
             } else {
-                $pipeline_result = $this->mongoVectorSearch();
+                $pipeline_result = $this->mongoVectorSearch($res['translated_question']);
             }
         } else {
             //$relative_context = 'No Relative Data';
-            $pipeline_result = $this->mongoVectorSearch();
+            $pipeline_result = $this->mongoVectorSearch($res['translated_question']);
         }
 
         $matches = $pipeline_result;
@@ -736,6 +740,7 @@ class MongoDBController extends Controller
             $relative_context[] = $match['content'];
         }
         $relative_context = implode("\n", $relative_context);
+
 
         //return $relative_context;
 
@@ -797,7 +802,7 @@ class MongoDBController extends Controller
     public function DeleteAllDocuments()
     {
 
-        DB::connection('mongodb')->table('realestate')->delete();
+        DB::connection('mongodb')->table('realestate')->where('property_id', '>=', 1)->delete();
         return response()->json([
             'message' => 'Records deleted successfully!',
 
@@ -808,7 +813,7 @@ class MongoDBController extends Controller
     {
 
         DB::connection('mongodb')->getMongoDB()
-            ->selectCollection('realestatev')->rename('realestate');
+            ->selectCollection('realestatev')->rename('realestate_ai_test');
         return response()->json([
             'message' => 'Collection Renamed successfully!',
 
@@ -821,6 +826,27 @@ class MongoDBController extends Controller
         return response()->json([
             'count' => $count,
 
+        ]);
+    }
+
+    public function backupEmbeddingOnMysql()
+    {
+
+        $results = DB::connection('mongodb')
+            ->table('realestate') // Use collection() instead of table()
+            ->where('table_name', 'properties')
+            ->get(); // No need for select('*')
+
+        foreach ($results as $result) {
+            DB::table('embeddings')->insert([
+                'project_id'  => null, // Directly access the object properties
+                'property_id' => $result->property_id,
+                'embedding'   => json_encode($result->embedding),
+            ]);
+        }
+        return response()->json([
+            'message' => 'Records stored successfully!',
+            //'data'  => $result[0]->embedding
         ]);
     }
 
@@ -897,9 +923,9 @@ class MongoDBController extends Controller
         echo "Vector search index created successfully!";
     }
 
-    public function mongoVectorSearch()
+    public function mongoVectorSearch($userQuery)
     {
-        $userQuery = 'Tell me about real estate';
+        //$userQuery = 'Tell me about property A303 (Ocean Pearl by SD)';
         $userEmbedding = $this->openAIService->generateEmbedding($userQuery);
         $searchResults = DB::connection('mongodb')->getMongoDB()->selectCollection('realestate')->aggregate([
             [

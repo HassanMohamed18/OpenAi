@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OpenAIController;
 use App\Http\Controllers\PineconeController;
 use App\Http\Controllers\SpeechController;
+use App\Http\Controllers\TextToSpeechController;
 use App\Http\Controllers\VectorDatabaesController;
 use App\Http\Controllers\VoiceBotController;
 use App\Http\Controllers\VoiceChatController;
@@ -26,6 +27,9 @@ Route::get('/chat', [ChatController::class, 'chat']);
 Route::get('/test', function (){
     return "test";
 });
+
+Route::get('/tts-stream', [TextToSpeechController::class, 'stream']);
+
 
 Route::get('/chat_gpt', [OpenAIController::class, 'chat']);
 Route::get('/ask_deepseek', [DeepSeekController::class, 'chat']);
@@ -61,6 +65,8 @@ Route::get('/mongo/search', [MongoDBController::class, 'search']);
 Route::get('/mongo/store', [MongoDBController::class, 'store']);
 Route::get('/mongo/rename', [MongoDBController::class, 'RenameCollection']);
 Route::get('/mongo/delete', [MongoDBController::class, 'DeleteAllDocuments']);
+Route::get('/mongo/embedding', [MongoDBController::class, 'backupEmbeddingOnMysql']);
+
 
 Route::get('/mongo/count', [MongoDBController::class, 'CountAllDocuments']);
 
@@ -78,8 +84,10 @@ Route::post('/get-aggregated-data', [MongoDBController::class, 'retreiveData']);
 
 Route::get('/chat_stream', [ChatWithEmbeddingsController::class, 'chat'])->name('chat.store');
 
+Route::post('/convert-pcm-to-wav', [TextToSpeechController::class, 'convertPcmToWav']);
 
 
+Route::post('/transcribe', [TextToSpeechController::class, 'transcribeAudio']);
 
 
 
