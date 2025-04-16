@@ -209,7 +209,7 @@
         <div class="input-area">
             <input type="text" id="userMessage" placeholder="Type a message..." />
             <button class="send-btn" onclick="sendMessage()">Send</button>
-            {{-- <button class="mic-btn" onclick="startVoiceRecognition()">🎤</button> --}}
+            <button class="mic-btn" onclick="startVoiceRecognition()">🎤</button>
         </div>
     </div>
 
@@ -328,10 +328,10 @@
 
                 if (data.results) {
                     chat(userMessage, data.results)
-                    //dc.send(JSON.stringify(chatEvent));
-                    // addMessage("AI", `<pre>${JSON.stringify(data.results, null, 2)}</pre>`);
+                    dc.send(JSON.stringify(chatEvent));
+                     addMessage("AI", `<pre>${JSON.stringify(data.results, null, 2)}</pre>`);
                 } else {
-                    // addMessage("AI", "No relevant data found.");
+                    addMessage("AI", "No relevant data found.");
                 }
 
             } catch (error) {
@@ -433,7 +433,7 @@
                                 stage = 2
 
                             } else if (stage == 2) {
-                                // addMessage("AI", aiMessage);
+                                addMessage("AI", aiMessage);
                                 stage = -1
 
                             } else {
@@ -523,25 +523,25 @@
 
 
 
-        // function startVoiceRecognition() {
-        //     if (!('webkitSpeechRecognition' in window)) {
-        //         alert("Speech recognition is not supported in this browser.");
-        //         return;
-        //     }
+        function startVoiceRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Speech recognition is not supported in this browser.");
+                return;
+            }
 
-        //     recognition = new webkitSpeechRecognition();
-        //     recognition.continuous = false;
-        //     recognition.interimResults = false;
-        //     recognition.lang = "ar-SA";
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = "ar-SA";
 
-        //     recognition.start();
+            recognition.start();
 
-        //     recognition.onresult = (event) => {
-        //         const transcript = event.results[0][0].transcript;
-        //         document.getElementById("userMessage").value = transcript;
-        //         //sendMessage();
-        //     };
-        // }
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById("userMessage").value = transcript;
+                sendMessage();
+            };
+        }
 
         function addMessage(sender, text) {
             const chatBox = document.getElementById("chatBox");

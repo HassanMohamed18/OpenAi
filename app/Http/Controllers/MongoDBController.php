@@ -365,107 +365,123 @@ class MongoDBController extends Controller
 
         // $convertedRecords;
 
-        // $projects = DB::table('projects')
-        //     ->leftJoin('locations', 'projects.location_id', '=', 'locations.location_id')
-        //     ->leftJoin('areas', 'locations.area_id', '=', 'areas.area_id')
-        //     ->leftJoin('dld_areas', 'areas.dld_area_id', '=', 'dld_areas.dld_area_id')
-        //     ->leftJoin('developers', 'projects.developer_id', '=', 'developers.developer_id')
-        //     ->select(
-        //         'projects.*',
-        //         'locations.description as location_description',
-        //         'locations.longitude',
-        //         'locations.latitude',
-        //         'locations.landmark',
-        //         'locations.west_side',
-        //         'locations.east_side',
-        //         'locations.south_side',
-        //         'locations.north_side',
-        //         'locations.google_map_link',
-        //         'areas.area_name',
-        //         'areas.region',
-        //         'dld_areas.dld_area_name',
-        //         'developers.name as developer_name'
-        //     )->distinct('project_name')
-        //     ->get();
+    //      $projects = DB::table('projects')
+    //         ->leftJoin('locations', 'projects.location_id', '=', 'locations.location_id')
+    //         ->leftJoin('areas', 'locations.area_id', '=', 'areas.area_id')
+    //         ->leftJoin('cities', 'locations.city_id', '=', 'cities.id')
+    //         ->leftJoin('states', 'cities.state_id', '=', 'states.id')
+    //         ->leftJoin('countries', 'cities.country_id', '=', 'countries.id')
+    //         ->leftJoin('dld_areas', 'areas.dld_area_id', '=', 'dld_areas.dld_area_id')
+    //         ->leftJoin('developers', 'projects.developer_id', '=', 'developers.developer_id')
+    //         ->select(
+    //             'projects.*',
+    //             'projects.total_units as total_properties',
+    //             'projects.available_units as available_properties',
+    //             'locations.description as location_description',
+    //             'locations.longitude',
+    //             'locations.latitude',
+    //             'locations.landmark',
+    //             'locations.west_side',
+    //             'locations.east_side',
+    //             'locations.south_side',
+    //             'locations.north_side',
+    //             'locations.google_map_link',
+    //             'areas.area_name',
+    //             'areas.region',
+    //             'dld_areas.dld_area_name',
+    //             'cities.name as state',
+    //             'states.name as city',
+    //             'countries.name as country',
+    //             'developers.name as developer_name'
+    //         )->distinct('project_name')
+    //         // ->skip(0)
+    //         // ->take(3)
+    //         ->get();
 
 
-        //     foreach ($projects as $project) {
-        //         $content = '';
-        //         foreach ($project as $key => $value) {
-        //             if (in_array($key, [
-        //                 "developer_id",
-        //                 "location_id",
-        //                 "project_size_sqmt",
-        //                 "min_price_range_SQ",
-        //                 "starting_price_range",
-        //                 "location_description",
-        //                 "table_name",
-        //                 "created_at",
-        //                 "updated_at",
-        //                 "deleted_at"
-        //             ])) {
-        //                 continue;
-        //             }
+    //     foreach ($projects as $project) {
+    //         $content = '';
+    //         foreach ($project as $key => $value) {
+    //             if (in_array($key, [
+    //                 "developer_id",
+    //                 "location_id",
+    //                 "project_size_sqmt",
+    //                 "min_price_range_SQ",
+    //                 "starting_price_range",
+    //                 "location_description",
+    //                 "document_type",
+    //                 "created_at",
+    //                 "updated_at",
+    //                 "deleted_at",
+    //                 "total_units",
+    //                 "available_units",
+    //                 "location"
 
-        //             $content .= $key . ':' . $value . ',';
-        //         }
-        //         $project->content = $content;
-        //         $project->embedding = $this->openAIService->generateEmbedding($content);
-        //         $project->area_name = $project->area_name . '/' . $project->region;
-        //         $project->table_name = 'projects';
+    //             ])) {
+    //                 continue;
+    //             }
 
-        //         if (isset($project->launch_date)) {
-        //             $project->launch_date = strtotime($project->launch_date);
-        //         }
-        //         if (isset($project->completion_date)) {
-        //             $project->completion_date = strtotime($project->completion_date);
-        //         }
+    //             $content .= $key . ':' . $value . ',';
+    //         }
+    //         $project->content = $content;
+    //         $project->embedding = $this->openAIService->generateEmbedding($content);
+    //         //$project->area_name = $project->area_name . '/' . $project->region;
+    //         $project->location = $project->area_name . ', ' . $project->region
+    //             . ', ' . $project->city . ', ' . $project->state . ', ' . $project->country;
+    //         $project->document_type = 'project';
 
-        //         $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
-        //         $project->min_price_range_SQ =  (int) filter_var($project->price_range_SQ, FILTER_SANITIZE_NUMBER_INT);
-        //         $project->project_size_sqmt =  (float) filter_var($project->project_size, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        //         // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
-        //     }
+    //         if (isset($project->launch_date)) {
+    //             $project->launch_date = strtotime($project->launch_date);
+    //         }
+    //         if (isset($project->completion_date)) {
+    //             $project->completion_date = strtotime($project->completion_date);
+    //         }
 
-        //     $projects = collect($projects)->map(function ($item) {
+    //         $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
+    //         $project->min_price_range_SQ =  (int) filter_var($project->price_range_SQ, FILTER_SANITIZE_NUMBER_INT);
+    //         $project->project_size_sqmt =  (float) filter_var($project->project_size, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    //         // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
+    //     }
 
-        //         return collect($item)->except([
-        //             'created_at',
-        //             'updated_at',
-        //             'deleted_at',
-        //             'location_id',
-        //             'developer_id',
-        //             'project_size',
-        //             'price_range_SQ',
-        //             'price_range',
-        //             'google_map_link',
-        //             'north_side',
-        //             'south_side',
-        //             'east_side',
-        //             'west_side',
-        //             'location_description',
-        //             'description',
-        //             'region'
+    //        $projects = collect($projects)->map(function ($item) {
 
-
-        //             // 'longitude',
-        //             // 'latitude',
-        //         ]);
-        //     });
-
-        //   return $projects;
-
-        //     $realestate_ai_data = $projects->toArray();
-        //     // Insert into MongoDB
-        //     foreach ($realestate_ai_data as $record) {
-        //         DB::connection('mongodb')->table('realestate_ai_test')->insert($record);
-        //     }
+    //         return collect($item)->except([
+    //             'created_at',
+    //             'updated_at',
+    //             'deleted_at',
+    //             'location_id',
+    //             'developer_id',
+    //             'project_size',
+    //             'price_range_SQ',
+    //             'price_range',
+    //             'google_map_link',
+    //             'north_side',
+    //             'south_side',
+    //             'east_side',
+    //             'west_side',
+    //             'location_description',
+    //             'description',
+    //             'region',
+                
 
 
-        //     return response()->json([
-        //         'message' => 'Records inserted successfully!',
-        //         //'data' => $properties
-        //     ]);
+    //             // 'longitude',
+    //             // 'latitude',
+    //         ]);
+    //     });
+
+    //    // return $projects;
+
+    //         $realestate_ai_data = $projects->toArray();
+    //         // Insert into MongoDB
+    //         foreach ($realestate_ai_data as $record) {
+    //             DB::connection('mongodb')->table('realestate')->insert($record);
+    //         }
+
+    //         return response()->json([
+    //             'message' => 'Records inserted successfully!',
+    //             //'data' => $properties
+    //         ]);
 
 
         // $areas = DB::table('areas')
@@ -525,13 +541,16 @@ class MongoDBController extends Controller
         // return $areas;
 
 
-          return $properties = DB::table('properties')
+         $properties = DB::table('properties')
             ->leftJoin('projects', 'properties.project_id', '=', 'projects.project_id')
             ->leftJoin('developers', 'projects.developer_id', '=', 'developers.developer_id')
-           
+
             //->leftJoin('addresses', 'properties.address_id', '=', 'addresses.address_id')
             ->leftJoin('locations', 'projects.location_id', '=', 'locations.location_id')
             ->leftJoin('areas', 'locations.area_id', '=', 'areas.area_id')
+            ->leftJoin('cities', 'locations.city_id', '=', 'cities.id')
+            ->leftJoin('states', 'cities.state_id', '=', 'states.id')
+            ->leftJoin('countries', 'cities.country_id', '=', 'countries.id')
             ->leftJoin('buildings', 'properties.building_id', '=', 'buildings.building_id')
             ->leftJoin('property_types', 'properties.property_type_id', '=', 'property_types.id')
             ->leftJoin('property_subtypes', 'properties.property_subtype_id', '=', 'property_subtypes.id')
@@ -546,19 +565,22 @@ class MongoDBController extends Controller
                 'property_subtypes.name as property_subtype',
                 'locations.landmark',
                 'areas.area_name as area_name',
-                'areas.region as region'
+                'areas.region as region',
+                'cities.name as state',
+                'states.name as city',
+                'countries.name as country'
 
             )
             // ->groupBy('property_name')
             // ->orderBy('property_id','asc')
-            // ->skip(0)
-            // ->take(522)
+            ->skip(400)
+            ->take(229)
             ->get();
 
-           $property_embeddings =  DB::table('embeddings')->whereNotNull('property_id')->get();
-                $property_embeddings = collect($property_embeddings);
+        // $property_embeddings =  DB::table('embeddings')->whereNotNull('property_id')->get();
+        // $property_embeddings = collect($property_embeddings);
         foreach ($properties as $property) {
-            $property->table_name = 'properties';
+            $property->document_type = 'property';
             // $project->starting_price_range =  (int) filter_var($project->price_range, FILTER_SANITIZE_NUMBER_INT);
             // $project->min_price_range_SQ =  (int) filter_var($project->price_range_SQ, FILTER_SANITIZE_NUMBER_INT);
             $property->plot_size =  (float) filter_var($property->plot_size, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
@@ -580,11 +602,12 @@ class MongoDBController extends Controller
                     "broker_license",
                     "property_type_id",
                     "property_subtype_id",
-                    "table_name",
+                    "document_type",
                     "created_at",
                     "updated_at",
                     "deleted_at",
                     
+
                 ])) {
                     continue;
                 }
@@ -592,11 +615,13 @@ class MongoDBController extends Controller
                 $content .= $key . ':' . $value . ',';
             }
             $property->content = $content;
-            $embedding = $property_embeddings->where('property_id',$property->property_id)->first();
-            $vector = json_decode($embedding->embedding,true);
-            $property->embedding = $vector;
-            //$property->embedding = $this->openAIService->generateEmbedding($content);
-            $property->area_name = $property->area_name .'/'.$property->region;
+            // $embedding = $property_embeddings->where('property_id', $property->property_id)->first();
+            // $vector = json_decode($embedding->embedding, true);
+           // $property->embedding = $vector;
+            $property->embedding = $this->openAIService->generateEmbedding($content);
+            //$property->area_name = $property->area_name . '/' . $property->region;
+            $property->location = $property->area_name . ', ' . $property->region
+                . ', ' . $property->city . ', ' . $property->state . ', ' . $property->country;
 
             // preg_match_all('/\d+/', $project->price_range_SQ, $matches);
 
@@ -607,7 +632,7 @@ class MongoDBController extends Controller
         }
 
 
-         $properties = collect($properties)->map(function ($item) {
+          $properties = collect($properties)->map(function ($item) {
             return collect($item)->except([
                 'created_at',
                 'updated_at',
@@ -624,7 +649,8 @@ class MongoDBController extends Controller
                 'building_id',
                 'building_id',
                 'address_id',
-                'region'
+                'region',
+                'area_name'
             ]);
         });
 
@@ -724,8 +750,6 @@ class MongoDBController extends Controller
                     return array_diff_key($itemArray, array_flip($keysToExclude));
                 }, iterator_to_array($results)); // Convert MongoDB cursor to array
 
-
-
             } else {
                 $pipeline_result = $this->mongoVectorSearch($res['translated_question']);
             }
@@ -802,7 +826,7 @@ class MongoDBController extends Controller
     public function DeleteAllDocuments()
     {
 
-        DB::connection('mongodb')->table('realestate')->where('property_id', '>=', 1)->delete();
+        DB::connection('mongodb')->table('realestate')->delete();
         return response()->json([
             'message' => 'Records deleted successfully!',
 
@@ -925,7 +949,7 @@ class MongoDBController extends Controller
 
     public function mongoVectorSearch($userQuery)
     {
-        //$userQuery = 'Tell me about property A303 (Ocean Pearl by SD)';
+       // $userQuery = 'Tell me about projects';
         $userEmbedding = $this->openAIService->generateEmbedding($userQuery);
         $searchResults = DB::connection('mongodb')->getMongoDB()->selectCollection('realestate')->aggregate([
             [
